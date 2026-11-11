@@ -4,13 +4,13 @@ go 1.27.0
 
 replace (
 	// forked to set O_CLOEXEC on device open and add SataDevice.CheckPowerMode (skip standby disks)
-	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c
+	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260723175002-53b369c3973c
 
 	// forked ethtool introduces missing APIs
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.1-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
@@ -24,42 +24,42 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	cel.dev/cel-go v0.33.0
+	cel.dev/cel-go v0.33.2
 	cloud.google.com/go/compute/metadata v0.10.0
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.24.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.15.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.5.0
 	github.com/alexflint/go-filemutex v1.3.0
 	github.com/anatol/smart.go v0.0.0-20260913233941-486c28b93357
-	github.com/aws/aws-sdk-go-v2/config v1.33.11
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.4
-	github.com/aws/aws-sdk-go-v2/service/acm v1.50.6
-	github.com/aws/aws-sdk-go-v2/service/kms v1.62.0
-	github.com/aws/smithy-go v1.28.6
+	github.com/aws/aws-sdk-go-v2/config v1.33.18
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.9
+	github.com/aws/aws-sdk-go-v2/service/acm v1.51.5
+	github.com/aws/aws-sdk-go-v2/service/kms v1.62.6
+	github.com/aws/smithy-go v1.28.9
 	github.com/beevik/ntp v1.6.0
 	github.com/beevik/nts v0.3.3
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bougou/go-ipmi v0.9.2-0.20261109131707-d0ee8a526f5e
-	github.com/cenkalti/backoff/v7 v7.0.1
+	github.com/bougou/go-ipmi d4fb9c6923cb
+	github.com/cenkalti/backoff/v7 v7.0.3
 	github.com/containerd/cgroups/v3 v3.1.3
-	github.com/containerd/containerd/api v1.11.1
-	github.com/containerd/containerd/v2 v2.3.7
+	github.com/containerd/containerd/api v1.12.0
+	github.com/containerd/containerd/v2 v2.4.2
 	github.com/containerd/errdefs v1.0.0
-	github.com/containerd/log v0.1.0
+	github.com/containerd/log v0.2.0
 	github.com/containerd/platforms v1.0.0-rc.5
 	github.com/containerd/typeurl/v2 v2.3.0
 	github.com/containernetworking/cni v1.3.1
-	github.com/containernetworking/plugins v1.9.1
+	github.com/containernetworking/plugins v1.10.0
 	github.com/coreos/go-iptables v0.8.0
-	github.com/cosi-project/runtime v1.17.0
-	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467
+	github.com/cosi-project/runtime v1.17.1
+	github.com/cyberphone/json-canonicalization v0.0.0-20261011152517-32a48195b9b2
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/digitalocean/go-libvirt v0.0.0-20261013170128-efbbdf578ac8
-	github.com/digitorus/pkcs7 v0.0.0-20260914070511-d678ea5ea03f
+	github.com/digitorus/pkcs7 v0.0.0-20261104125046-a476de3098e4
 	github.com/diskfs/go-diskfs v1.9.4
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v29.9.2+incompatible
+	github.com/docker/cli v29.9.3+incompatible
 	github.com/dustin/go-humanize v1.1.0
 	github.com/elastic/go-libaudit/v2 v2.6.2
 	github.com/equinix-ms/go-vmw-guestrpc v1.0.0
@@ -69,18 +69,18 @@ require (
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/g0rbe/go-chattr v1.0.1
-	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v3 v3.6.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.4
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/cadvisor/lib v0.60.6
-	github.com/google/certificate-transparency-go v1.3.3
+	github.com/google/certificate-transparency-go v1.4.0
 	github.com/google/go-containerregistry v0.22.1
-	github.com/google/go-eventlog v0.0.3-0.20261001001437-1991f15bc4b0
+	github.com/google/go-eventlog 3729737f629c
 	github.com/google/go-tpm v0.9.8
 	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/gopacket/gopacket v1.7.4
+	github.com/gopacket/gopacket v1.7.7
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.4
 	github.com/hashicorp/go-cleanhttp v0.5.2
@@ -89,10 +89,10 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/insomniacslk/dhcp v0.0.0-20261014062924-c6bb46ad3f3a
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260802200809-43bafec815b3
+	github.com/jsimonetti/rtnetlink/v2 v2.3.0
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.20.3
-	github.com/klauspost/cpuid/v2 v2.4.1
+	github.com/klauspost/compress v1.20.4
+	github.com/klauspost/cpuid/v2 v2.4.2
 	github.com/lestrrat-go/helium v0.11.0
 	github.com/linode/go-metadata v0.3.1
 	github.com/marmos91/dittofs v0.36.0
@@ -100,7 +100,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24
 	github.com/mdlayher/arp v0.0.0-20260923112748-e9ee4960293e
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
-	github.com/mdlayher/ethtool v0.6.1
+	github.com/mdlayher/ethtool v0.7.0
 	github.com/mdlayher/genetlink v1.4.0
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
 	github.com/mdlayher/ndp v1.1.0
@@ -115,7 +115,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.3.0
-	github.com/osrg/gobgp/v4 v4.10.1-0.20261020121312-57fa92f17f18
+	github.com/osrg/gobgp/v4 v4.11.0
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/pin/tftp/v3 v3.2.0
@@ -157,8 +157,8 @@ require (
 	github.com/siderolabs/siderolink v0.3.18
 	github.com/siderolabs/talos/pkg/machinery v1.15.0-beta.0
 	github.com/sigstore/protobuf-specs v0.5.2
-	github.com/sigstore/sigstore v1.11.1
-	github.com/sigstore/sigstore-go v1.3.0
+	github.com/sigstore/sigstore v1.11.3
+	github.com/sigstore/sigstore-go v1.4.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.1.0
@@ -175,32 +175,32 @@ require (
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.28.0
 	go.uber.org/zap/exp v0.3.0
-	go.yaml.in/yaml/v4 v4.0.0-rc.8
+	go.yaml.in/yaml/v4 v4.0.0
 	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb
 	golang.org/x/net v0.62.0
-	golang.org/x/oauth2 v0.37.0
-	golang.org/x/sync v0.24.0
-	golang.org/x/sys v0.49.0
-	golang.org/x/term v0.47.0
-	golang.org/x/text v0.43.0
+	golang.org/x/oauth2 v0.38.0
+	golang.org/x/sync v0.25.0
+	golang.org/x/sys v0.50.0
+	golang.org/x/term v0.48.0
+	golang.org/x/text v0.44.0
 	golang.org/x/time v0.16.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
-	k8s.io/api v0.38.0-alpha.2
-	k8s.io/apiextensions-apiserver v0.38.0-alpha.2
-	k8s.io/apimachinery v0.38.0-alpha.2
-	k8s.io/apiserver v0.38.0-alpha.2
-	k8s.io/client-go v0.38.0-alpha.2
-	k8s.io/component-base v0.38.0-alpha.2
-	k8s.io/cri-api v0.38.0-alpha.2
+	k8s.io/api v0.38.0-beta.0
+	k8s.io/apiextensions-apiserver v0.38.0-beta.0
+	k8s.io/apimachinery v0.38.0-beta.0
+	k8s.io/apiserver v0.38.0-beta.0
+	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/component-base v0.38.0-beta.0
+	k8s.io/cri-api v0.38.0-beta.0
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-proxy v0.38.0-alpha.2
-	k8s.io/kube-scheduler v0.38.0-alpha.2
-	k8s.io/kubectl v0.38.0-alpha.2
-	k8s.io/kubelet v0.38.0-alpha.2
-	k8s.io/pod-security-admission v0.38.0-alpha.2
+	k8s.io/kube-proxy v0.38.0-beta.0
+	k8s.io/kube-scheduler v0.38.0-beta.0
+	k8s.io/kubectl v0.38.0-beta.0
+	k8s.io/kubelet v0.38.0-beta.0
+	k8s.io/pod-security-admission v0.38.0-beta.0
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12008.0
