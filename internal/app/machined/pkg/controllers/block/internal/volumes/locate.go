@@ -284,8 +284,22 @@ func findCandidateDisks(vc ManagerContext) ([]string, error) {
 	return matchedDisks, nil
 }
 
+// diskChecker evaluates a single candidate disk against a volume configuration.
+//
+// The real provisioning path passes CheckDiskForProvisioning (which opens and probes the
+// device); the read-only allocation planner passes an equivalent check running against an
+// in-memory topology snapshot.
+type diskChecker func(logger *zap.Logger, diskPath string, volumeCfg *block.VolumeConfig) CheckDiskResult
+
 // selectBestDisk analyzes candidates and picks the one that satisfies constraints.
 func selectBestDisk(logger *zap.Logger, candidates []string, cfg *block.VolumeConfig) (string, CheckDiskResult, error) {
+	return selectBestDiskWith(logger, candidates, cfg, CheckDiskForProvisioning)
+}
+
+// selectBestDiskWith is selectBestDisk with an injectable disk check, so that the very same
+// candidate iteration, first-fit selection and rejection accounting can be replayed on a
+// read-only snapshot.
+func selectBestDiskWith(logger *zap.Logger, candidates []string, cfg *block.VolumeConfig, check diskChecker) (string, CheckDiskResult, error) {
 	var (
 		pickedDisk      string
 		finalResult     CheckDiskResult
@@ -293,7 +307,7 @@ func selectBestDisk(logger *zap.Logger, candidates []string, cfg *block.VolumeCo
 	)
 
 	for _, disk := range candidates {
-		res := CheckDiskForProvisioning(logger, disk, cfg)
+		res := check(logger, disk, cfg)
 		if res.CanProvision {
 			pickedDisk = disk
 			finalResult = res
