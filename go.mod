@@ -30,6 +30,7 @@ require (
 	cel.dev/cel-go v0.33.0
 	cloud.google.com/go/compute/metadata v0.10.0
 	codeberg.org/miekg/dns v0.6.125
+	filippo.io/age v1.3.2
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.15.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
@@ -215,7 +216,6 @@ require (
 
 require (
 	cel.dev/expr v0.25.3 // indirect
-	filippo.io/age v1.3.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.13.0 // indirect

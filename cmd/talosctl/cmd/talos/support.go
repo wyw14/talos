@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"text/tabwriter"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -31,6 +32,7 @@ import (
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
+	"github.com/siderolabs/talos/pkg/bytesize"
 	"github.com/siderolabs/talos/pkg/kubeconfig"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -46,6 +48,12 @@ var supportCmdFlags struct {
 	noEncryption                  bool
 	encryptionRecipients          []string
 	encryptionNoDefaultRecipients bool
+
+	captureArtifacts    bool
+	captureDir          string
+	captureTTL          time.Duration
+	captureMaxDisk      *bytesize.ByteSize
+	captureMaxCollector *bytesize.ByteSize
 }
 
 // supportCmd represents the support command.
@@ -76,6 +84,15 @@ set by the members of the 'siderolabs' GitHub organization. The encrypted bundle
 only be decryptable by the Sidero Labs team, but you can also specify additional recipients using the
 --encryption-recipients flag, or disable encryption completely using the --no-encryption flag.
 Default encryption recipients can be removed by setting --encryption-no-default-recipients flag.
+
+With --capture-artifacts the command first persists every collector result as a separate sealed
+artifact in a local workspace (with identity, timestamps, size and digest), and only then assembles
+the final archive. An interrupted or failed run can be resumed: collectors whose sealed artifacts
+are still within the TTL are not run again, while failed, missing, expired or corrupted artifacts
+are recollected. Any change in the collector set, nodes, authorization, redaction protocol or
+encryption recipients invalidates the workspace and forces a full rerun. The manifest inside the
+archive records the per-collector states and timestamps and marks a partial run as such; the
+results are not presented as an atomic cluster snapshot.
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -94,13 +111,16 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 
 		var encryptionOpts []encryption.Option
 
+		var recipients []string
+
 		if !supportCmdFlags.noEncryption {
-			opts, recipients, err := buildEncryptionOptions()
+			opts, resolvedRecipients, err := buildEncryptionOptions()
 			if err != nil {
 				return err
 			}
 
 			encryptionOpts = opts
+			recipients = resolvedRecipients
 
 			fmt.Fprintln(safeout.Stderr(), "Encrypting support bundle to the following recipients:")
 
@@ -109,32 +129,17 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 			}
 		}
 
-		f, err := openArchive(ctx, clientFactory)
+		outputPath, err := resolveOutputPath(ctx, clientFactory)
 		if err != nil {
 			return err
-		}
-
-		defer f.Close() //nolint:errcheck
-
-		var (
-			archiveOutput io.Writer = f
-			encWriter     io.WriteCloser
-		)
-
-		if !supportCmdFlags.noEncryption {
-			encWriter, err = encryption.Encrypt(f, encryptionOpts...)
-			if err != nil {
-				return err
-			}
-
-			archiveOutput = encWriter
 		}
 
 		progress := make(chan bundle.Progress)
 
 		var (
-			eg     errgroup.Group
-			errors supportBundleErrors
+			eg           errgroup.Group
+			errors       supportBundleErrors
+			collectError error
 		)
 
 		eg.Go(func() error {
@@ -149,7 +154,11 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 			return nil
 		})
 
-		collectErr := collectData(ctx, archiveOutput, progress, clientFactory)
+		if supportCmdFlags.captureArtifacts {
+			collectError = runCapture(ctx, outputPath, progress, clientFactory, encryptionOpts)
+		} else {
+			collectError = runLegacySupport(ctx, outputPath, progress, clientFactory, encryptionOpts)
+		}
 
 		close(progress)
 
@@ -157,20 +166,13 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 			return e
 		}
 
-		// flush the age encryption layer before reporting success.
-		if encWriter != nil {
-			if err = encWriter.Close(); err != nil {
-				return err
-			}
-		}
-
 		if err = errors.print(); err != nil {
 			return err
 		}
 
-		fmt.Fprintf(safeout.Stderr(), "Support bundle is written to %s\n", supportCmdFlags.output)
+		fmt.Fprintf(safeout.Stderr(), "Support bundle is written to %s\n", outputPath)
 
-		return collectErr
+		return collectError
 	},
 }
 
@@ -311,7 +313,9 @@ func buildEncryptionOptions() ([]encryption.Option, []string, error) {
 	return opts, recipients, nil
 }
 
-func openArchive(ctx context.Context, clientFactory *global.ClientFactory) (*os.File, error) {
+// resolveOutputPath determines the output file path and asks for confirmation when it already
+// exists. The file itself is opened by the caller, right before content is written into it.
+func resolveOutputPath(ctx context.Context, clientFactory *global.ClientFactory) (string, error) {
 	if supportCmdFlags.output == "" {
 		supportCmdFlags.output = "support"
 
@@ -328,24 +332,29 @@ func openArchive(ctx context.Context, clientFactory *global.ClientFactory) (*os.
 
 	if _, err := os.Stat(supportCmdFlags.output); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			return nil, err
+			return "", err
 		}
 	} else {
-		buf := bufio.NewReader(os.Stdin)
+		buf := bufio.NewReader(os.Stdin) //nolint:forbidigo // interactive confirmation on the terminal
 
 		safeout.Printf("%s already exists, overwrite? [y/N]: ", supportCmdFlags.output)
 
 		choice, err := buf.ReadString('\n')
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 
 		if strings.TrimSpace(strings.ToLower(choice)) != "y" {
-			return nil, fmt.Errorf("operation aborted")
+			return "", fmt.Errorf("operation aborted")
 		}
 	}
 
-	return os.OpenFile(supportCmdFlags.output, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
+	return supportCmdFlags.output, nil
+}
+
+// openOutputFile creates (or truncates) the output archive file.
+func openOutputFile(outputPath string) (*os.File, error) {
+	return os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 }
 
 type supportBundleError struct {
@@ -481,5 +490,37 @@ func init() {
 		&supportCmdFlags.encryptionNoDefaultRecipients, "encryption-no-default-recipients", false,
 		"do not encrypt to the default recipients, only to the ones provided via --encryption-recipients",
 	)
+	supportCmd.Flags().BoolVar(
+		&supportCmdFlags.captureArtifacts, "capture-artifacts", false,
+		"capture collector results as resumable sealed artifacts before assembling the archive",
+	)
+	supportCmd.Flags().StringVar(
+		&supportCmdFlags.captureDir, "capture-dir", "",
+		"workspace directory for the sealed artifacts and checkpoint (defaults to <output>.capture)",
+	)
+	supportCmd.Flags().DurationVar(
+		&supportCmdFlags.captureTTL, "capture-ttl", 30*time.Minute,
+		"time-to-live of sealed artifacts across runs; expired artifacts are recollected",
+	)
+	supportCmdFlags.captureMaxDisk = mustByteSize("2GiB")
+	supportCmd.Flags().Var(
+		supportCmdFlags.captureMaxDisk, "capture-max-disk",
+		"maximum total size of the plaintext artifacts in the workspace (e.g. 512MiB, 2GiB)",
+	)
+	supportCmdFlags.captureMaxCollector = mustByteSize("512MiB")
+	supportCmd.Flags().Var(
+		supportCmdFlags.captureMaxCollector, "capture-max-collector-size",
+		"maximum size of a single collector result (e.g. 256MiB, 512MiB)",
+	)
 	supportCmdFlags.InsecureFlags.AddFlags(supportCmd)
+}
+
+// mustByteSize creates a ByteSize flag value from a hard-coded default expression.
+func mustByteSize(defaultValue string) *bytesize.ByteSize {
+	bs := bytesize.New()
+	if err := bs.Set(defaultValue); err != nil {
+		panic(fmt.Sprintf("invalid default byte size %q: %v", defaultValue, err))
+	}
+
+	return bs
 }
